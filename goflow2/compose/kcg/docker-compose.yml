@@ -19,7 +19,14 @@ services:
       - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
       - KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
       - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
+      - KAFKA_LOG_RETENTION_MS=300000
+      - KAFKA_LOG_RETENTION_BYTES=536870912
+      - KAFKA_LOG_SEGMENT_BYTES=52428800
+      - KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS=60000
+      - KAFKA_LOG_CLEANUP_POLICY=delete 
     restart: always
+    volumes:
+      - kafka_data:/var/lib/kafka/data
   grafana:
     image: grafana/grafana:12.1
     environment:
@@ -80,3 +87,4 @@ services:
 
 volumes:
   clickhouse_datas:
+  kafka_data:
