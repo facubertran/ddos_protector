@@ -1,3 +1,4 @@
+services:
   tabix:
     image: spoonest/clickhouse-tabix-web-client:latest
     container_name: tabix
