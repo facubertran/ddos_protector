@@ -52,6 +52,7 @@ ORDER BY velocidad_max_pps DESC
 Para activar el entorno virtual, ejecuta:
 
 ```bash
+python3 -m venv venv
 source venv/bin/activate
 ```
 
