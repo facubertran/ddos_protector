@@ -1,0 +1,2 @@
+nohup: no se tendrá en cuenta la entrada
+2025-12-31 12:12:42,958 INFO Connected to ClickHouse over HTTP: http://localhost:8123 db=default

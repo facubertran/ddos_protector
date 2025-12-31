@@ -62,3 +62,9 @@ SELECT  num_messages_read
 FROM system.kafka_consumers
 WHERE table = 'flows'
 ```
+
+## Ejecutar python en segundo plano
+```bash
+nohup python3 alert.py > alert.log 2>&1 &
+```
+50828
