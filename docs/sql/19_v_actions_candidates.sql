@@ -37,7 +37,7 @@ FROM
 ) AS c
 WHERE c.action != 'ignore'
 
-  -- ✅ allowlist de redes que sí controlás
+  -- ✅ solo redes controladas
   AND EXISTS
   (
     SELECT 1
@@ -46,7 +46,27 @@ WHERE c.action != 'ignore'
       AND isIPAddressInRange(toString(c.src_ip), n.cidr)
   )
 
-  -- cooldown / dedupe
+  -- 🚫 ignorar por red/IP origen (CIDR, /32 válido)
+  AND NOT EXISTS
+  (
+    SELECT 1
+    FROM default.ignore_nets i
+    WHERE i.is_enabled = 1
+      AND i.direction IN ('src', 'both')
+      AND isIPAddressInRange(toString(c.src_ip), i.cidr)
+  )
+
+  -- 🚫 ignorar por red/IP destino (target)
+  AND NOT EXISTS
+  (
+    SELECT 1
+    FROM default.ignore_nets i
+    WHERE i.is_enabled = 1
+      AND i.direction IN ('dst', 'both')
+      AND isIPAddressInRange(toString(c.target_dst_ip), i.cidr)
+  )
+
+  -- cooldown
   AND NOT EXISTS
   (
     SELECT 1
