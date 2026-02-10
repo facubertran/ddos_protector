@@ -25,10 +25,10 @@ SELECT
   ifNull(p.top_port_uniq_dst_ips, toUInt64(0)) AS top_port_uniq_dst_ips,
 
   multiIf(
-    m.pps >= 5000 AND ifNull(d.top_dst_share, 0) >= 0.80 AND m.uniq_dst_ips <= 5, 'single_target_flood',
-    m.pps >= 3000 AND m.uniq_dst_ips >= 100,                                      'spray_many_targets',
-    m.pps >= 3000 AND m.uniq_dst_ports >= 100,                                    'scan_many_ports',
-    m.pps >= 3000 AND ifNull(p.top_proto, 0) = 17 AND ifNull(p.top_port_share, 0) >= 0.70, 'udp_amplification_like',
+    m.pps >= 1000 AND ifNull(d.top_dst_share, 0) >= 0.80 AND m.uniq_dst_ips <= 5, 'single_target_flood',
+    m.pps >= 1000 AND m.uniq_dst_ips >= 100,                                      'spray_many_targets',
+    m.pps >= 1000 AND m.uniq_dst_ports >= 100,                                    'scan_many_ports',
+    m.pps >= 1000 AND ifNull(p.top_proto, 0) = 17 AND ifNull(p.top_port_share, 0) >= 0.70, 'udp_amplification_like',
     'normal_or_low_signal'
   ) AS attack_type,
 
