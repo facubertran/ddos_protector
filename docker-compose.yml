@@ -9,3 +9,9 @@ services:
       - ./routers.json:/app/routers.json:ro
     environment:
       - ROUTERS_CONFIG_PATH=/app/routers.json
+    networks:
+      - ddos_network
+
+networks:
+  ddos_network:
+    external: true

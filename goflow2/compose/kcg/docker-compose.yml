@@ -85,8 +85,16 @@ services:
       - clickhouse_data:/var/lib/clickhouse
     depends_on:
       - kafka
+    networks:
+      - default
+      - ddos_network
 
 volumes:
   clickhouse_data:
   grafana_data:
   kafka_data:
+
+
+networks:
+  ddos_network:
+    external: true
