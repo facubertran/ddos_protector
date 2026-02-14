@@ -23,7 +23,7 @@ services:
       - KAFKA_LOG_RETENTION_BYTES=536870912
       - KAFKA_LOG_SEGMENT_BYTES=52428800
       - KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS=60000
-      - KAFKA_LOG_CLEANUP_POLICY=delete 
+      - KAFKA_LOG_CLEANUP_POLICY=delete
     restart: always
     volumes:
       - kafka_data:/var/lib/kafka/data
@@ -37,6 +37,7 @@ services:
       - 3000:3000
     restart: always
     volumes:
+      - grafana_data:/var/lib/grafana
       - ./grafana/datasources-ch.yml:/etc/grafana/provisioning/datasources/datasources-ch.yml
       - ./grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
       - ./grafana/dashboards:/var/lib/grafana/dashboards
@@ -87,4 +88,5 @@ services:
 
 volumes:
   clickhouse_data:
+  grafana_data:
   kafka_data:
