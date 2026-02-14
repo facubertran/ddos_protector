@@ -66,6 +66,6 @@ WHERE c.action != 'ignore'
   AND toString(c.src_ip) NOT IN (
     SELECT toString(src_ip)
     FROM default.mitigation_actions
-    WHERE created_at >= now() - INTERVAL 10 MINUTE
-      AND status IN ('pending','applied')
+    WHERE created_at >= now() - INTERVAL 1 HOUR
+      AND status IN ('pending','applied','mitigated')
   );

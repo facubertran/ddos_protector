@@ -46,6 +46,7 @@ DEDUP_TTL_SECONDS = int(os.getenv("DEDUP_TTL_SECONDS", "600"))
 ROUTERS_CONFIG_PATH = os.getenv("ROUTERS_CONFIG_PATH", "routers.json")
 ADDRESS_LIST_NAME = os.getenv("ADDRESS_LIST_NAME", "ddos_detected")
 ADDRESS_LIST_COMMENT = os.getenv("ADDRESS_LIST_COMMENT", "Mitigation")
+ADDRESS_LIST_TIMEOUT = os.getenv("ADDRESS_LIST_TIMEOUT", "01:00:00")
 
 
 # ── Helpers ─────────────────────────────────────────────────────────────────
@@ -143,7 +144,7 @@ def fetch_candidates() -> List[Dict[str, Any]]:
     return ch_select_json(sql)
 
 
-def enqueue_action(c: Dict[str, Any]) -> None:
+def enqueue_action(c: Dict[str, Any], status: str = "pending") -> None:
     now_local = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     details = {
         "alert_channel": "telegram",
@@ -159,7 +160,7 @@ def enqueue_action(c: Dict[str, Any]) -> None:
         "target_dst_ip": c.get("target_dst_ip", "0.0.0.0"),
         "target_proto": int(c.get("target_proto") or 0),
         "target_dst_port": int(c.get("target_dst_port") or 0),
-        "status": "pending",
+        "status": status,
         "last_update": now_local,
         "details": json.dumps(details, ensure_ascii=False),
     }
@@ -183,11 +184,15 @@ def enqueue_action(c: Dict[str, Any]) -> None:
 
 # ── RouterOS REST API ───────────────────────────────────────────────────────
 
-def add_to_address_list(src_ip: str, routers: List[Dict[str, Any]]) -> None:
-    """Add the attacker IP to the address-list on every configured router."""
-    if not routers:
-        return
+def add_to_address_list(src_ip: str, routers: List[Dict[str, Any]]) -> bool:
+    """Add the attacker IP to the address-list on every configured router.
 
+    Returns True if at least one router accepted the entry.
+    """
+    if not routers:
+        return False
+
+    any_ok = False
     for router in routers:
         host = router["host"]
         port = router.get("port", 8741)
@@ -202,6 +207,7 @@ def add_to_address_list(src_ip: str, routers: List[Dict[str, Any]]) -> None:
             "address": src_ip,
             "list": ADDRESS_LIST_NAME,
             "comment": ADDRESS_LIST_COMMENT,
+            "timeout": ADDRESS_LIST_TIMEOUT,
         }
 
         try:
@@ -217,6 +223,7 @@ def add_to_address_list(src_ip: str, routers: List[Dict[str, Any]]) -> None:
                     "RouterOS [%s:%s] address-list OK: %s → %s",
                     host, port, src_ip, ADDRESS_LIST_NAME,
                 )
+                any_ok = True
             else:
                 log.error(
                     "RouterOS [%s:%s] address-list FAILED (%d): %s",
@@ -227,6 +234,7 @@ def add_to_address_list(src_ip: str, routers: List[Dict[str, Any]]) -> None:
                 "RouterOS [%s:%s] connection error: %s",
                 host, port, e,
             )
+    return any_ok
 
 
 # ── Main loop ───────────────────────────────────────────────────────────────
@@ -256,16 +264,21 @@ def main():
                 if k in seen:
                     continue
 
-                enqueue_action(c)
+                # 1. Try mitigation first
+                ok = add_to_address_list(c["src_ip"], routers)
+                status = "mitigated" if ok else "failed"
 
+                # 2. Record action with actual result
+                enqueue_action(c, status=status)
+
+                # 3. Send Telegram alert
                 try:
                     tg_send(fmt_alert(c))
                 except Exception as tg_err:
                     log.error("Telegram send failed: %s", tg_err)
-                add_to_address_list(c["src_ip"], routers)
 
                 seen[k] = now
-                log.info("Queued + alerted + mitigated: src=%s action=%s", c["src_ip"], c["action"])
+                log.info("Processed: src=%s action=%s status=%s", c["src_ip"], c["action"], status)
 
         except Exception as e:
             log.exception("Loop error: %s", e)
