@@ -13,3 +13,11 @@ SELECT
     details
 FROM  default.mitigation_actions 
 LIMIT 200
+
+
+---
+SELECT *
+FROM default.mitigation_actions
+WHERE created_at >= now() - INTERVAL 1 HOUR
+  AND status IN ('applied', 'mitigated')
+ORDER BY created_at DESC
