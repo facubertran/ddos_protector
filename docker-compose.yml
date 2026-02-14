@@ -1,0 +1,11 @@
+services:
+  alert-mitigation:
+    build: .
+    container_name: ddos-alert-mitigation
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - ./routers.json:/app/routers.json:ro
+    environment:
+      - ROUTERS_CONFIG_PATH=/app/routers.json

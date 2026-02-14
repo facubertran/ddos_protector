@@ -67,4 +67,82 @@ WHERE table = 'flows'
 ```bash
 nohup python3 alert.py > alert.log 2>&1 &
 ```
-50828
+
+---
+
+## Docker
+
+### Requisitos previos
+
+- [Docker](https://docs.docker.com/get-docker/) y [Docker Compose](https://docs.docker.com/compose/install/) instalados.
+
+### Archivos de configuración
+
+Antes de iniciar el contenedor, asegurate de tener estos archivos en la raíz del proyecto:
+
+| Archivo        | Descripción |
+|----------------|-------------|
+| `.env`         | Variables de entorno (ClickHouse, Telegram, polling, etc.) |
+| `routers.json` | Lista de routers MikroTik para mitigación |
+
+#### `.env` de ejemplo
+
+```env
+CH_URL=http://10.199.0.15:8123
+CH_USER=default
+CH_PASSWORD=flow
+CH_DB=default
+
+TELEGRAM_BOT_TOKEN=tu_token
+TELEGRAM_CHAT_ID=-100123456789
+
+POLL_SECONDS=10
+MAX_CANDIDATES_PER_TICK=100
+DEDUP_TTL_SECONDS=600
+```
+
+#### `routers.json` de ejemplo
+
+```json
+[
+  {
+    "host": "192.168.253.1",
+    "port": 8741,
+    "username": "api",
+    "password": "api123",
+    "use_ssl": true
+  }
+]
+```
+
+### Construir y levantar
+
+```bash
+docker compose up -d --build
+```
+
+### Ver logs
+
+```bash
+docker compose logs -f alert-mitigation
+```
+
+### Detener
+
+```bash
+docker compose down
+```
+
+### Subir la imagen a un registry
+
+1. **Hacer login** al registry (Docker Hub, GitLab, GitHub Container Registry, etc.):
+
+```bash
+docker login registry.example.com
+```
+
+2. **Construir y tagear** la imagen:
+
+```bash
+docker buildx build --platform linux/amd64 --push -t crenein/ddos_protector:latest .
+```
