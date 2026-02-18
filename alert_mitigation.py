@@ -34,8 +34,9 @@ CH_PASSWORD = os.getenv("CH_PASSWORD", "")
 CH_DB = env("CH_DB", "default")
 
 # ── Telegram ────────────────────────────────────────────────────────────────
-TELEGRAM_BOT_TOKEN = env("TELEGRAM_BOT_TOKEN")
-TELEGRAM_CHAT_ID = env("TELEGRAM_CHAT_ID")
+TELEGRAM_ENABLED = os.getenv("TELEGRAM_ENABLED", "true").strip().lower() in ("true", "1", "yes")
+TELEGRAM_BOT_TOKEN = env("TELEGRAM_BOT_TOKEN") if TELEGRAM_ENABLED else ""
+TELEGRAM_CHAT_ID = env("TELEGRAM_CHAT_ID") if TELEGRAM_ENABLED else ""
 
 # ── General ─────────────────────────────────────────────────────────────────
 POLL_SECONDS = int(os.getenv("POLL_SECONDS", "10"))
@@ -271,11 +272,12 @@ def main():
                 # 2. Record action with actual result
                 enqueue_action(c, status=status)
 
-                # 3. Send Telegram alert
-                try:
-                    tg_send(fmt_alert(c))
-                except Exception as tg_err:
-                    log.error("Telegram send failed: %s", tg_err)
+                # 3. Send Telegram alert (if enabled)
+                if TELEGRAM_ENABLED:
+                    try:
+                        tg_send(fmt_alert(c))
+                    except Exception as tg_err:
+                        log.error("Telegram send failed: %s", tg_err)
 
                 seen[k] = now
                 log.info("Processed: src=%s action=%s status=%s", c["src_ip"], c["action"], status)

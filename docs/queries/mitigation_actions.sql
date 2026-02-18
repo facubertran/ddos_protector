@@ -21,3 +21,9 @@ FROM default.mitigation_actions
 WHERE created_at >= now() - INTERVAL 1 HOUR
   AND status IN ('applied', 'mitigated')
 ORDER BY created_at DESC
+
+---
+SELECT COUNT(src_ip) AS counter, src_ip
+FROM default.mitigation_actions
+GROUP BY src_ip
+ORDER BY counter DESC
